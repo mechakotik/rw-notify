@@ -13,7 +13,8 @@ func main() {
 		Poller: &tg.LongPoller{Timeout: time.Second},
 	}
 
-	gBot, err := tg.NewBot(settings)
+	var err error
+	gBot, err = tg.NewBot(settings)
 	if err != nil {
 		log.Fatal("[f] failed to create Telegram bot: " + err.Error())
 	}

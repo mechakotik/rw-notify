@@ -25,7 +25,7 @@ type BotData struct {
 	userRoutes map[int64]map[Route]bool
 }
 
-var gBot = tg.Bot{}
+var gBot *tg.Bot
 var gBotData = BotData{
 	routeInfo:  map[Route]RouteInfo{},
 	routeUsers: map[Route]map[int64]bool{},
