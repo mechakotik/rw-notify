@@ -96,7 +96,7 @@ func fetchRouteInfo(route Route) RouteInfo {
 func updateRoutesInfo() {
 	for route, info := range gBotData.routeInfo {
 		newInfo := fetchRouteInfo(route)
-		if newInfo == info {
+		if newInfo == info || !newInfo.valid {
 			continue
 		}
 		log.Println("[l] updated info for route " + route.number + " (" + route.date + "), sending notifications")
