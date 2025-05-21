@@ -18,7 +18,7 @@ func formRouteURL(route Route, carType int) string {
 	urlValues.Add("train_number", route.number)
 	urlValues.Add("car_type", strconv.Itoa(carType))
 
-	routeBaseURL := "https://pass.rw.by/ru/ajax/route/car_places"
+	routeBaseURL := "http://pass.rw.by/ru/ajax/route/car_places"
 	routeURL := routeBaseURL + "?" + urlValues.Encode()
 	return routeURL
 }
