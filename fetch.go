@@ -116,6 +116,6 @@ func updateRoutesInfo() {
 func updateRoutesLoop() {
 	for {
 		updateRoutesInfo()
-		time.Sleep(time.Minute * 5)
+		time.Sleep(time.Minute)
 	}
 }
