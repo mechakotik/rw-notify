@@ -1,12 +1,25 @@
 package main
 
 import (
+	"fmt"
 	tg "gopkg.in/telebot.v4"
 	"log"
+	"strconv"
 )
 
 func sendHelp(ctx tg.Context) error {
-	help := "test"
+	help := "/add [number] [from] [to] [date]\n" +
+		"Добавить маршрут в отслеживание\n" +
+		"[number] - номер поезда, например 704Б\n" +
+		"[from] - код станции отправления в ЕСР, например 2100050\n" +
+		"[to] - код станции прибытия в ЕСР, например 2100001\n" +
+		"[date] - дата отправления, например 2025-05-25\n\n" +
+		"/list\n" +
+		"Список всех маршрутов, которые вы отслеживаете\n\n" +
+		"/remove [index]\n" +
+		"Убрать маршрут из отслеживания\n" +
+		"[index] - номер маршрута в выводе команды /list\n"
+
 	return ctx.Send(help)
 }
 
@@ -48,7 +61,71 @@ func processAddCommand(ctx tg.Context) error {
 	}
 	gBotData.userRoutes[ctx.Sender().ID][route] = true
 
-	return ctx.Send("Теперь вы отслеживаете этот поезд")
+	return ctx.Send("Теперь вы отслеживаете этот маршрут")
+}
+
+func processListCommand(ctx tg.Context) error {
+	routes, exists := gBotData.userRoutes[ctx.Sender().ID]
+
+	hasRoutes := false
+	if exists {
+		for _, enabled := range routes {
+			if enabled {
+				hasRoutes = true
+				break
+			}
+		}
+	}
+	if !hasRoutes {
+		return ctx.Send("Вы не отслеживаете никакие маршруты")
+	}
+
+	message := ""
+	index := 0
+	for route, enabled := range routes {
+		if enabled {
+			index++
+			message += fmt.Sprintf("%d. %s %s-%s %s\n", index, route.number, route.from, route.to, route.date)
+		}
+	}
+
+	return ctx.Send(message)
+}
+
+func processRemoveCommand(ctx tg.Context) error {
+	args := ctx.Args()
+	if len(args) != 1 {
+		return ctx.Send("Неправильный формат ввода, введите /help для справки")
+	}
+	remIndex, err := strconv.Atoi(args[0])
+	if err != nil {
+		return ctx.Send("Неправильный формат ввода, введите /help для справки")
+	}
+
+	routes, exists := gBotData.userRoutes[ctx.Sender().ID]
+	if !exists {
+		return ctx.Send("Вы не отслеживаете никакие маршруты")
+	}
+
+	index := 0
+	remRoute := Route{}
+	for route, enabled := range routes {
+		if enabled {
+			index++
+			if index == remIndex {
+				remRoute = route
+				index = -1
+				break
+			}
+		}
+	}
+	if index != -1 {
+		return ctx.Send("Вы не отслеживаете маршрут с номером " + strconv.Itoa(remIndex) + ", введите /list чтобы узнать нужный номер")
+	}
+
+	gBotData.routeUsers[remRoute][ctx.Sender().ID] = false
+	gBotData.userRoutes[ctx.Sender().ID][remRoute] = false
+	return ctx.Send(fmt.Sprintf("Маршрут %s (%s) больше не отслеживается", remRoute.number, remRoute.date))
 }
 
 func sendNotification(userID int64, route Route, old RouteInfo, new RouteInfo) {

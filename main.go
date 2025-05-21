@@ -22,6 +22,8 @@ func main() {
 	gBot.Handle("/start", sendHelp)
 	gBot.Handle("/help", sendHelp)
 	gBot.Handle("/add", processAddCommand)
+	gBot.Handle("/list", processListCommand)
+	gBot.Handle("/remove", processRemoveCommand)
 
 	go updateRoutesLoop()
 	gBot.Start()
