@@ -66,12 +66,14 @@ func fetchRouteInfo(route Route) RouteInfo {
 	// TODO: all valid car types here
 	for _, carType := range [](int){3, 4} {
 		mp := fetchJSON(formRouteURL(route, carType))
+		if mp != nil {
+			result.valid = true
+		}
 		tariffs, ok := mp["tariffs"].([]interface{})
 		if !ok {
 			continue
 		}
 
-		result.valid = true
 		for _, tariff := range tariffs {
 			cars, ok := tariff.(map[string]interface{})["cars"].([]interface{})
 			if !ok {
