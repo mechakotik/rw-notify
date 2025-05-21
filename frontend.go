@@ -61,7 +61,7 @@ func sendNotification(userID int64, route Route, old RouteInfo, new RouteInfo) {
 	user := &tg.User{
 		ID: userID,
 	}
-	suffix := "в поезде " + route.number + "(" + route.date + ") "
+	suffix := "в поезде " + route.number + " (" + route.date + ") "
 	if !old.hasPlaces && new.hasPlaces {
 		gBot.Send(user, "Появились свободные места "+suffix)
 	}
