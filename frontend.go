@@ -5,6 +5,7 @@ import (
 	tg "gopkg.in/telebot.v4"
 	"log"
 	"strconv"
+	"unicode/utf8"
 )
 
 func sendHelp(ctx tg.Context) error {
@@ -29,7 +30,7 @@ func processAddCommand(ctx tg.Context) error {
 
 	args := ctx.Args()
 	if len(args) != 4 {
-		return ctx.Send("Неправильный формат ввода, введите /help для справки")
+		return ctx.Send("Неправильное количество аргументов, введите /help для справки")
 	}
 
 	var route Route
@@ -37,6 +38,19 @@ func processAddCommand(ctx tg.Context) error {
 	route.from = args[1]
 	route.to = args[2]
 	route.date = args[3]
+
+	if !isValidTrainNumber(route.number) {
+		return ctx.Send("Некорректный формат номера поезда, введите /help для справки")
+	}
+	if !isValidStationCode(route.from) {
+		return ctx.Send("Некорректный код станции отправления, введите /help для справки")
+	}
+	if !isValidStationCode(route.to) {
+		return ctx.Send("Некорректный код станции прибытия, введите /help для справки")
+	}
+	if !isValidDate(route.date) {
+		return ctx.Send("Некорректная дата, введите /help для справки")
+	}
 
 	info, exists := gBotData.routeInfo[route]
 	if !exists {
@@ -62,6 +76,44 @@ func processAddCommand(ctx tg.Context) error {
 	gBotData.userRoutes[ctx.Sender().ID][route] = true
 
 	return ctx.Send("Теперь вы отслеживаете этот маршрут")
+}
+
+func isValidTrainNumber(number string) bool {
+	if utf8.RuneCountInString(number) != 4 {
+		return false
+	}
+	for i := 0; i < 3; i++ {
+		if !('0' <= number[i] && number[i] <= '9') {
+			return false
+		}
+	}
+	return true
+}
+
+func isValidStationCode(code string) bool {
+	for i := 0; i < len(code); i++ {
+		if !('0' <= code[i] && code[i] <= '9') {
+			return false
+		}
+	}
+	return true
+}
+
+func isValidDate(date string) bool {
+	if len(date) != 10 {
+		return false
+	}
+	for _, i := range [](int){0, 1, 2, 3, 5, 6, 8, 9} {
+		if !('0' <= date[i] && date[i] <= '9') {
+			return false
+		}
+	}
+	for _, i := range [](int){4, 7} {
+		if date[i] != '-' {
+			return false
+		}
+	}
+	return true
 }
 
 func processListCommand(ctx tg.Context) error {
