@@ -2,13 +2,48 @@ package main
 
 import (
 	"encoding/json"
+	"golang.org/x/net/context"
+	"golang.org/x/net/proxy"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"time"
 )
+
+var client *http.Client
+
+func initProxy() {
+	proxyIP := os.Getenv("PROXY_IP")
+	if proxyIP == "" {
+		return
+	}
+
+	auth := &proxy.Auth{
+		User:     os.Getenv("RWNOTIFY_PROXY_USER"),
+		Password: os.Getenv("RWNOTIFY_PROXY_PASSWORD"),
+	}
+
+	dialer, err := proxy.SOCKS5("tcp", proxyIP, auth, &net.Dialer{
+		Timeout: 30,
+	})
+	if err != nil {
+		log.Fatal("[f] failed to create dialer: " + err.Error())
+	}
+
+	transport := &http.Transport{
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			return dialer.Dial(network, addr)
+		},
+	}
+	client = &http.Client{
+		Transport: transport,
+		Timeout:   30 * time.Second,
+	}
+}
 
 func formRouteURL(route Route, carType int) string {
 	urlValues := url.Values{}
@@ -18,13 +53,20 @@ func formRouteURL(route Route, carType int) string {
 	urlValues.Add("train_number", route.number)
 	urlValues.Add("car_type", strconv.Itoa(carType))
 
-	routeBaseURL := "http://pass.rw.by/ru/ajax/route/car_places"
+	routeBaseURL := "https://pass.rw.by/ru/ajax/route/car_places"
 	routeURL := routeBaseURL + "?" + urlValues.Encode()
 	return routeURL
 }
 
 func fetchJSON(url string) map[string]interface{} {
-	resp, err := http.Get(url)
+	var resp *http.Response
+	var err error
+	if client != nil {
+		resp, err = client.Get(url)
+	} else {
+		resp, err = http.Get(url)
+	}
+
 	if err != nil {
 		log.Println("[e] error when fetching JSON from " + url + ": " + err.Error())
 		return nil

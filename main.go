@@ -8,8 +8,10 @@ import (
 )
 
 func main() {
+	initProxy()
+
 	settings := tg.Settings{
-		Token:  os.Getenv("TOKEN"),
+		Token:  os.Getenv("RWNOTIFY_TOKEN"),
 		Poller: &tg.LongPoller{Timeout: time.Second},
 	}
 
