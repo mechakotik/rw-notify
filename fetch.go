@@ -17,18 +17,23 @@ import (
 var client *http.Client
 
 func initProxy() {
-	proxyIP := os.Getenv("PROXY_IP")
+	proxyIP := os.Getenv("RWNOTIFY_PROXY_IP")
 	if proxyIP == "" {
 		return
 	}
 
-	auth := &proxy.Auth{
-		User:     os.Getenv("RWNOTIFY_PROXY_USER"),
-		Password: os.Getenv("RWNOTIFY_PROXY_PASSWORD"),
+	var auth *proxy.Auth
+	proxyUser := os.Getenv("RWNOTIFY_PROXY_USER")
+	proxyPassword := os.Getenv("RWNOTIFY_PROXY_PASSWORD")
+	if proxyUser != "" || proxyPassword != "" {
+		auth = &proxy.Auth{
+			User:     os.Getenv("RWNOTIFY_PROXY_USER"),
+			Password: os.Getenv("RWNOTIFY_PROXY_PASSWORD"),
+		}
 	}
 
 	dialer, err := proxy.SOCKS5("tcp", proxyIP, auth, &net.Dialer{
-		Timeout: 30,
+		Timeout: 30 * time.Second,
 	})
 	if err != nil {
 		log.Fatal("[f] failed to create dialer: " + err.Error())
@@ -43,6 +48,8 @@ func initProxy() {
 		Transport: transport,
 		Timeout:   30 * time.Second,
 	}
+
+	log.Println("[l] using proxy " + proxyIP)
 }
 
 func formRouteURL(route Route, carType int) string {
