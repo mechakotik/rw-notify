@@ -37,7 +37,7 @@ func initProxy() {
 		Timeout: 30 * time.Second,
 	})
 	if err != nil {
-		log.Fatal("[f] failed To create dialer: " + err.Error())
+		log.Fatal("[f] failed to create dialer: " + err.Error())
 	}
 
 	transport := &http.Transport{
@@ -76,17 +76,17 @@ func fetchJSON(url string) map[string]interface{} {
 	}
 
 	if err != nil {
-		log.Println("[e] error when fetching JSON From " + url + ": " + err.Error())
+		log.Println("[e] error when fetching JSON from " + url + ": " + err.Error())
 		return nil
 	}
 	if resp.StatusCode != http.StatusOK {
-		log.Println("[e] error when fetching JSON From " + url + ": HTTP status code " + strconv.Itoa(resp.StatusCode))
+		log.Println("[e] error when fetching JSON from " + url + ": HTTP status code " + strconv.Itoa(resp.StatusCode))
 		return nil
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			log.Println("[w] failed To close response body: " + err.Error())
+			log.Println("[w] failed to close response body: " + err.Error())
 		}
 	}(resp.Body)
 

@@ -20,7 +20,7 @@ func main() {
 	var err error
 	gBot, err = tg.NewBot(settings)
 	if err != nil {
-		log.Fatal("[f] failed To create Telegram bot: " + err.Error())
+		log.Fatal("[f] failed to create Telegram bot: " + err.Error())
 	}
 
 	gBot.Handle("/start", sendHelp)

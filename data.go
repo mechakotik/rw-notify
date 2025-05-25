@@ -39,38 +39,38 @@ var gBotMutex = sync.Mutex{}
 func saveBotData() {
 	file, err := os.Create("data.gob")
 	if err != nil {
-		log.Println("[w] failed To create save file: " + err.Error())
+		log.Println("[w] failed to create save file: " + err.Error())
 		return
 	}
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			log.Println("[w] failed To close save file: " + err.Error())
+			log.Println("[w] failed to close save file: " + err.Error())
 		}
 	}(file)
 
 	encoder := gob.NewEncoder(file)
 	err = encoder.Encode(gBotData)
 	if err != nil {
-		log.Println("[w] failed To encode bot data To save file: " + err.Error())
+		log.Println("[w] failed to encode bot data To save file: " + err.Error())
 	}
 }
 
 func loadBotData() {
 	file, err := os.Open("data.gob")
 	if err != nil {
-		log.Println("[w] failed To open save file: " + err.Error())
+		log.Println("[w] failed to open save file: " + err.Error())
 	}
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			log.Println("[w] failed To close save file: " + err.Error())
+			log.Println("[w] failed to close save file: " + err.Error())
 		}
 	}(file)
 
 	decoder := gob.NewDecoder(file)
 	err = decoder.Decode(&gBotData)
 	if err != nil {
-		log.Println("[w] failed To decode bot data From save file: " + err.Error())
+		log.Println("[w] failed to decode bot data from save file: " + err.Error())
 	}
 }
