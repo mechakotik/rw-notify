@@ -145,6 +145,9 @@ func fetchRouteInfo(route Route) RouteInfo {
 }
 
 func updateRoutesInfo() {
+	gBotMutex.Lock()
+	defer gBotMutex.Unlock()
+
 	for route, info := range gBotData.RouteInfo {
 		newInfo := fetchRouteInfo(route)
 		if newInfo == info || !newInfo.Valid {
@@ -156,14 +159,10 @@ func updateRoutesInfo() {
 				sendNotification(userID, route, info, newInfo)
 			}
 		}
-		gBotMutex.Lock()
 		gBotData.RouteInfo[route] = newInfo
-		gBotMutex.Unlock()
 	}
 
-	gBotMutex.Lock()
 	saveBotData()
-	gBotMutex.Unlock()
 }
 
 func updateRoutesLoop() {
