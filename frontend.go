@@ -5,6 +5,7 @@ import (
 	tg "gopkg.in/telebot.v4"
 	"log"
 	"strconv"
+	"time"
 	"unicode/utf8"
 )
 
@@ -117,19 +118,18 @@ func isValidStationCode(code string) bool {
 }
 
 func isValidDate(date string) bool {
-	if len(date) != 10 {
+	layout := "2006-01-02"
+	parsedTime, err := time.Parse(layout, date)
+	if err != nil {
 		return false
 	}
-	for _, i := range [](int){0, 1, 2, 3, 5, 6, 8, 9} {
-		if !('0' <= date[i] && date[i] <= '9') {
-			return false
-		}
+
+	currentTime := time.Now().UTC()
+	diff := currentTime.Sub(parsedTime)
+	if diff < -48 || diff > 768 {
+		return false
 	}
-	for _, i := range [](int){4, 7} {
-		if date[i] != '-' {
-			return false
-		}
-	}
+
 	return true
 }
 
