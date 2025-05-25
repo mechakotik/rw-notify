@@ -3,6 +3,7 @@
 
 # Binaries for programs and plugins
 rwnotify
+data.gob
 *.exe
 *.exe~
 *.dll

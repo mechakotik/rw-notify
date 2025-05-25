@@ -34,47 +34,48 @@ func processAddCommand(ctx tg.Context) error {
 	}
 
 	var route Route
-	route.number = args[0]
-	route.from = args[1]
-	route.to = args[2]
-	route.date = args[3]
+	route.Number = args[0]
+	route.From = args[1]
+	route.To = args[2]
+	route.Date = args[3]
 
-	if !isValidTrainNumber(route.number) {
+	if !isValidTrainNumber(route.Number) {
 		return ctx.Send("Некорректный формат номера поезда, введите /help для справки")
 	}
-	if !isValidStationCode(route.from) {
+	if !isValidStationCode(route.From) {
 		return ctx.Send("Некорректный код станции отправления, введите /help для справки")
 	}
-	if !isValidStationCode(route.to) {
+	if !isValidStationCode(route.To) {
 		return ctx.Send("Некорректный код станции прибытия, введите /help для справки")
 	}
-	if !isValidDate(route.date) {
+	if !isValidDate(route.Date) {
 		return ctx.Send("Некорректная дата, введите /help для справки")
 	}
 
-	info, exists := gBotData.routeInfo[route]
+	info, exists := gBotData.RouteInfo[route]
 	if !exists {
 		ctx.Send("Этот маршрут ещё не отслеживается ботом, получение данных с сервера...")
 		info = fetchRouteInfo(route)
-		if !info.valid {
+		if !info.Valid {
 			return ctx.Send("Сервер вернул невалидные данные, проверьте корректность ввода")
 		}
-		gBotData.routeInfo[route] = info
-		log.Println("[l] added new route " + route.number + " (" + route.date + ") to global watchlist")
+		gBotData.RouteInfo[route] = info
+		log.Println("[l] added new route " + route.Number + " (" + route.Date + ") To global watchlist")
 	}
 
-	_, exists = gBotData.routeUsers[route]
+	_, exists = gBotData.RouteUsers[route]
 	if !exists {
-		gBotData.routeUsers[route] = map[int64]bool{}
+		gBotData.RouteUsers[route] = map[int64]bool{}
 	}
-	gBotData.routeUsers[route][ctx.Sender().ID] = true
+	gBotData.RouteUsers[route][ctx.Sender().ID] = true
 
-	_, exists = gBotData.userRoutes[ctx.Sender().ID]
+	_, exists = gBotData.UserRoutes[ctx.Sender().ID]
 	if !exists {
-		gBotData.userRoutes[ctx.Sender().ID] = map[Route]bool{}
+		gBotData.UserRoutes[ctx.Sender().ID] = map[Route]bool{}
 	}
-	gBotData.userRoutes[ctx.Sender().ID][route] = true
+	gBotData.UserRoutes[ctx.Sender().ID][route] = true
 
+	defer saveBotData()
 	return ctx.Send("Теперь вы отслеживаете этот маршрут")
 }
 
@@ -117,8 +118,10 @@ func isValidDate(date string) bool {
 }
 
 func processListCommand(ctx tg.Context) error {
-	routes, exists := gBotData.userRoutes[ctx.Sender().ID]
+	gBotMutex.Lock()
+	defer gBotMutex.Unlock()
 
+	routes, exists := gBotData.UserRoutes[ctx.Sender().ID]
 	hasRoutes := false
 	if exists {
 		for _, enabled := range routes {
@@ -137,7 +140,7 @@ func processListCommand(ctx tg.Context) error {
 	for route, enabled := range routes {
 		if enabled {
 			index++
-			message += fmt.Sprintf("%d. %s %s-%s %s\n", index, route.number, route.from, route.to, route.date)
+			message += fmt.Sprintf("%d. %s %s-%s %s\n", index, route.Number, route.From, route.To, route.Date)
 		}
 	}
 
@@ -145,6 +148,9 @@ func processListCommand(ctx tg.Context) error {
 }
 
 func processRemoveCommand(ctx tg.Context) error {
+	gBotMutex.Lock()
+	defer gBotMutex.Unlock()
+
 	args := ctx.Args()
 	if len(args) != 1 {
 		return ctx.Send("Неправильный формат ввода, введите /help для справки")
@@ -154,7 +160,7 @@ func processRemoveCommand(ctx tg.Context) error {
 		return ctx.Send("Неправильный формат ввода, введите /help для справки")
 	}
 
-	routes, exists := gBotData.userRoutes[ctx.Sender().ID]
+	routes, exists := gBotData.UserRoutes[ctx.Sender().ID]
 	if !exists {
 		return ctx.Send("Вы не отслеживаете никакие маршруты")
 	}
@@ -175,9 +181,11 @@ func processRemoveCommand(ctx tg.Context) error {
 		return ctx.Send("Вы не отслеживаете маршрут с номером " + strconv.Itoa(remIndex) + ", введите /list чтобы узнать нужный номер")
 	}
 
-	gBotData.routeUsers[remRoute][ctx.Sender().ID] = false
-	gBotData.userRoutes[ctx.Sender().ID][remRoute] = false
-	return ctx.Send(fmt.Sprintf("Маршрут %s (%s) больше не отслеживается", remRoute.number, remRoute.date))
+	gBotData.RouteUsers[remRoute][ctx.Sender().ID] = false
+	gBotData.UserRoutes[ctx.Sender().ID][remRoute] = false
+
+	defer saveBotData()
+	return ctx.Send(fmt.Sprintf("Маршрут %s (%s) больше не отслеживается", remRoute.Number, remRoute.Date))
 }
 
 func sendNotification(userID int64, route Route, old RouteInfo, new RouteInfo) {
@@ -190,17 +198,17 @@ func sendNotification(userID int64, route Route, old RouteInfo, new RouteInfo) {
 	user := &tg.User{
 		ID: userID,
 	}
-	suffix := "в поезде " + route.number + " (" + route.date + ") "
-	if !old.hasPlaces && new.hasPlaces {
+	suffix := "в поезде " + route.Number + " (" + route.Date + ") "
+	if !old.HasPlaces && new.HasPlaces {
 		gBot.Send(user, "Появились свободные места "+suffix)
 	}
-	if old.hasPlaces && !new.hasPlaces {
+	if old.HasPlaces && !new.HasPlaces {
 		gBot.Send(user, "Больше нет свободных мест "+suffix)
 	}
-	if !old.hasLowerPlaces && new.hasLowerPlaces {
+	if !old.HasLowerPlaces && new.HasLowerPlaces {
 		gBot.Send(user, "Появились свободные нижние места "+suffix)
 	}
-	if old.hasLowerPlaces && !new.hasLowerPlaces {
+	if old.HasLowerPlaces && !new.HasLowerPlaces {
 		gBot.Send(user, "Больше нет свободных нижних мест "+suffix)
 	}
 }

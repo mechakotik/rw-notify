@@ -36,7 +36,7 @@ func initProxy() {
 		Timeout: 30 * time.Second,
 	})
 	if err != nil {
-		log.Fatal("[f] failed to create dialer: " + err.Error())
+		log.Fatal("[f] failed To create dialer: " + err.Error())
 	}
 
 	transport := &http.Transport{
@@ -54,10 +54,10 @@ func initProxy() {
 
 func formRouteURL(route Route, carType int) string {
 	urlValues := url.Values{}
-	urlValues.Add("from", route.from)
-	urlValues.Add("to", route.to)
-	urlValues.Add("date", route.date)
-	urlValues.Add("train_number", route.number)
+	urlValues.Add("From", route.From)
+	urlValues.Add("To", route.To)
+	urlValues.Add("Date", route.Date)
+	urlValues.Add("train_number", route.Number)
 	urlValues.Add("car_type", strconv.Itoa(carType))
 
 	routeBaseURL := "https://pass.rw.by/ru/ajax/route/car_places"
@@ -75,17 +75,17 @@ func fetchJSON(url string) map[string]interface{} {
 	}
 
 	if err != nil {
-		log.Println("[e] error when fetching JSON from " + url + ": " + err.Error())
+		log.Println("[e] error when fetching JSON From " + url + ": " + err.Error())
 		return nil
 	}
 	if resp.StatusCode != http.StatusOK {
-		log.Println("[e] error when fetching JSON from " + url + ": HTTP status code " + strconv.Itoa(resp.StatusCode))
+		log.Println("[e] error when fetching JSON From " + url + ": HTTP status code " + strconv.Itoa(resp.StatusCode))
 		return nil
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			log.Println("[w] failed to close response body: " + err.Error())
+			log.Println("[w] failed To close response body: " + err.Error())
 		}
 	}(resp.Body)
 
@@ -107,16 +107,16 @@ func fetchJSON(url string) map[string]interface{} {
 
 func fetchRouteInfo(route Route) RouteInfo {
 	result := RouteInfo{
-		valid:          false,
-		hasPlaces:      false,
-		hasLowerPlaces: false,
+		Valid:          false,
+		HasPlaces:      false,
+		HasLowerPlaces: false,
 	}
 
-	// TODO: all valid car types here
+	// TODO: all Valid car types here
 	for _, carType := range [](int){3, 4} {
 		mp := fetchJSON(formRouteURL(route, carType))
 		if mp != nil {
-			result.valid = true
+			result.Valid = true
 		}
 		tariffs, ok := mp["tariffs"].([]interface{})
 		if !ok {
@@ -131,11 +131,11 @@ func fetchRouteInfo(route Route) RouteInfo {
 			for _, car := range cars {
 				totalPlaces, ok := car.(map[string]interface{})["totalPlaces"].(float64)
 				if ok && totalPlaces != 0 {
-					result.hasPlaces = true
+					result.HasPlaces = true
 				}
 				lowerPlaces, ok := car.(map[string]interface{})["lowerPlaces"].(float64)
 				if ok && lowerPlaces != 0 {
-					result.hasLowerPlaces = true
+					result.HasLowerPlaces = true
 				}
 			}
 		}
@@ -145,21 +145,25 @@ func fetchRouteInfo(route Route) RouteInfo {
 }
 
 func updateRoutesInfo() {
-	for route, info := range gBotData.routeInfo {
+	for route, info := range gBotData.RouteInfo {
 		newInfo := fetchRouteInfo(route)
-		if newInfo == info || !newInfo.valid {
+		if newInfo == info || !newInfo.Valid {
 			continue
 		}
-		log.Println("[l] updated info for route " + route.number + " (" + route.date + "), sending notifications")
-		for userID, active := range gBotData.routeUsers[route] {
+		log.Println("[l] updated info for route " + route.Number + " (" + route.Date + "), sending notifications")
+		for userID, active := range gBotData.RouteUsers[route] {
 			if active {
 				sendNotification(userID, route, info, newInfo)
 			}
 		}
 		gBotMutex.Lock()
-		gBotData.routeInfo[route] = newInfo
+		gBotData.RouteInfo[route] = newInfo
 		gBotMutex.Unlock()
 	}
+
+	gBotMutex.Lock()
+	saveBotData()
+	gBotMutex.Unlock()
 }
 
 func updateRoutesLoop() {
