@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"golang.org/x/net/context"
 	"golang.org/x/net/proxy"
 	"io"
@@ -144,11 +145,24 @@ func fetchRouteInfo(route Route) RouteInfo {
 	return result
 }
 
+func updateRoutesLoop() {
+	for {
+		updateRoutesInfo()
+		time.Sleep(time.Minute)
+	}
+}
+
 func updateRoutesInfo() {
 	gBotMutex.Lock()
 	defer gBotMutex.Unlock()
 
+	dropRoutes := [](Route){}
 	for route, info := range gBotData.RouteInfo {
+		if shouldDropRoute(route) {
+			dropRoutes = append(dropRoutes, route)
+			log.Println(fmt.Sprintf("[l] dropping route %s (%s)", route.Number, route.Date))
+			continue
+		}
 		newInfo := fetchRouteInfo(route)
 		if newInfo == info || !newInfo.Valid {
 			continue
@@ -162,12 +176,29 @@ func updateRoutesInfo() {
 		gBotData.RouteInfo[route] = newInfo
 	}
 
+	for _, route := range dropRoutes {
+		for userID, active := range gBotData.RouteUsers[route] {
+			if active {
+				gBotData.UserRoutes[userID][route] = false
+			}
+		}
+		delete(gBotData.RouteInfo, route)
+		delete(gBotData.RouteUsers, route)
+	}
+
 	saveBotData()
 }
 
-func updateRoutesLoop() {
-	for {
-		updateRoutesInfo()
-		time.Sleep(time.Minute)
+func shouldDropRoute(route Route) bool {
+	if !isValidDate(route.Date) {
+		return true
 	}
+	hasUsers := false
+	for _, active := range gBotData.RouteUsers[route] {
+		if active {
+			hasUsers = true
+			break
+		}
+	}
+	return !hasUsers
 }

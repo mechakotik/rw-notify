@@ -119,13 +119,13 @@ func isValidStationCode(code string) bool {
 
 func isValidDate(date string) bool {
 	layout := "2006-01-02"
-	parsedTime, err := time.Parse(layout, date)
+	dateTime, err := time.Parse(layout, date)
 	if err != nil {
 		return false
 	}
 
 	currentTime := time.Now().UTC()
-	diff := currentTime.Sub(parsedTime)
+	diff := currentTime.Sub(dateTime).Hours()
 	if diff < -48 || diff > 768 {
 		return false
 	}
