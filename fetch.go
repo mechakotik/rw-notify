@@ -54,9 +54,9 @@ func initProxy() {
 
 func formRouteURL(route Route, carType int) string {
 	urlValues := url.Values{}
-	urlValues.Add("From", route.From)
-	urlValues.Add("To", route.To)
-	urlValues.Add("Date", route.Date)
+	urlValues.Add("from", route.From)
+	urlValues.Add("to", route.To)
+	urlValues.Add("date", route.Date)
 	urlValues.Add("train_number", route.Number)
 	urlValues.Add("car_type", strconv.Itoa(carType))
 
