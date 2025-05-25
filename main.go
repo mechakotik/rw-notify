@@ -12,8 +12,9 @@ func main() {
 	initProxy()
 
 	settings := tg.Settings{
-		Token:  os.Getenv("RWNOTIFY_TOKEN"),
-		Poller: &tg.LongPoller{Timeout: time.Second},
+		Token:     os.Getenv("RWNOTIFY_TOKEN"),
+		Poller:    &tg.LongPoller{Timeout: time.Second},
+		ParseMode: "HTML",
 	}
 
 	var err error
@@ -24,6 +25,7 @@ func main() {
 
 	gBot.Handle("/start", sendHelp)
 	gBot.Handle("/help", sendHelp)
+	gBot.Handle("/codes", sendCodes)
 	gBot.Handle("/add", processAddCommand)
 	gBot.Handle("/list", processListCommand)
 	gBot.Handle("/remove", processRemoveCommand)

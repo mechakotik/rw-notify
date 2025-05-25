@@ -9,19 +9,35 @@ import (
 )
 
 func sendHelp(ctx tg.Context) error {
-	help := "/add [number] [from] [to] [date]\n" +
+	help := "<b>/add [number] [from] [to] [date]</b>\n" +
 		"Добавить маршрут в отслеживание\n" +
-		"[number] - номер поезда, например 704Б\n" +
-		"[from] - код станции отправления в ЕСР, например 2100050\n" +
-		"[to] - код станции прибытия в ЕСР, например 2100001\n" +
-		"[date] - дата отправления, например 2025-05-25\n\n" +
-		"/list\n" +
+		"<b>[number]</b> - номер поезда, например 704Б\n" +
+		"<b>[from]</b> - код станции отправления, см. /codes\n" +
+		"<b>[to]</b> - код станции прибытия, см. /codes\n" +
+		"<b>[date]</b> - дата отправления, например 2025-05-25\n\n" +
+		"<b>/list</b>\n" +
 		"Список всех маршрутов, которые вы отслеживаете\n\n" +
-		"/remove [index]\n" +
+		"<b>/remove [index]</b>\n" +
 		"Убрать маршрут из отслеживания\n" +
-		"[index] - номер маршрута в выводе команды /list\n"
+		"<b>[index]</b> - номер маршрута в выводе команды /list\n"
 
 	return ctx.Send(help)
+}
+
+func sendCodes(ctx tg.Context) error {
+	codes := "БЖД использует коды железнодорожных станций в формате АСУ \"Экспресс-3\" (UIC-коды)." +
+		"Вот такие коды для станций в областных центрах:\n\n" +
+		"<b>2100001</b> - Минск-Пассажирский\n" +
+		"<b>2100200</b> - Брест-Центральный\n" +
+		"<b>2100050</b> - Витебск\n" +
+		"<b>2100100</b> - Гомель\n" +
+		"<b>2100070</b> - Гродно\n" +
+		"<b>2100150</b> - Могилёв\n\n" +
+		"Чтобы посмотреть код другой станции, можно открыть на pass.rw.by " +
+		"список поездов на каком-то маршруте, прибывающем на эту станцию, " +
+		"и посмотреть на число после &to_exp= в ссылке на страницу."
+
+	return ctx.Send(codes)
 }
 
 func processAddCommand(ctx tg.Context) error {
@@ -140,7 +156,7 @@ func processListCommand(ctx tg.Context) error {
 	for route, enabled := range routes {
 		if enabled {
 			index++
-			message += fmt.Sprintf("%d. %s %s-%s %s\n", index, route.Number, route.From, route.To, route.Date)
+			message += fmt.Sprintf("%d. %s %s %s %s\n", index, route.Number, route.From, route.To, route.Date)
 		}
 	}
 
