@@ -125,7 +125,7 @@ func isValidDate(date string) bool {
 	}
 
 	currentTime := time.Now().UTC()
-	diff := currentTime.Sub(dateTime).Hours()
+	diff := dateTime.Sub(currentTime).Hours()
 	if diff < -48 || diff > 768 {
 		return false
 	}
