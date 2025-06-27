@@ -154,7 +154,6 @@ func updateRoutesLoop() {
 
 func updateRoutesInfo() {
 	gBotMutex.Lock()
-	defer gBotMutex.Unlock()
 
 	dropRoutes := [](Route){}
 	for route, info := range gBotData.RouteInfo {
@@ -163,7 +162,9 @@ func updateRoutesInfo() {
 			log.Println(fmt.Sprintf("[l] dropping route %s (%s)", route.Number, route.Date))
 			continue
 		}
+		gBotMutex.Unlock()
 		newInfo := fetchRouteInfo(route)
+		gBotMutex.Lock()
 		if newInfo == info || !newInfo.Valid {
 			continue
 		}
@@ -187,6 +188,7 @@ func updateRoutesInfo() {
 	}
 
 	saveBotData()
+	gBotMutex.Unlock()
 }
 
 func shouldDropRoute(route Route) bool {
