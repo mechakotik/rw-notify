@@ -208,8 +208,6 @@ func sendNotification(userID int64, route Route, old RouteInfo, new RouteInfo) {
 	if gBot == nil {
 		return
 	}
-	gBotMutex.Lock()
-	defer gBotMutex.Unlock()
 
 	user := &tg.User{
 		ID: userID,
