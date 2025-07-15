@@ -72,7 +72,9 @@ func processAddCommand(ctx tg.Context) error {
 	info, exists := gBotData.RouteInfo[route]
 	if !exists {
 		ctx.Send("Этот маршрут ещё не отслеживается ботом, получение данных с сервера...")
+		gBotMutex.Unlock()
 		info = fetchRouteInfo(route)
+		gBotMutex.Lock()
 		if !info.Valid {
 			return ctx.Send("Сервер вернул невалидные данные, проверьте корректность ввода")
 		}
