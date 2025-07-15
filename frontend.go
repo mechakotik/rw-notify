@@ -97,7 +97,7 @@ func processAddCommand(ctx tg.Context) error {
 }
 
 func isValidTrainNumber(number string) bool {
-	if utf8.RuneCountInString(number) != 4 {
+	if utf8.RuneCountInString(number) >= 7 {
 		return false
 	}
 	for i := 0; i < 3; i++ {
